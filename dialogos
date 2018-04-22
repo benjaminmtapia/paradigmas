@@ -1,0 +1,41 @@
+#lang racket
+(define (conversaciones)
+ (list
+   (list "buenos dias" "buenos dias")
+   (list "hola" "en que puedo ayudarle?")
+   (list "buenas noches" "buenas noches, que desea llevar?")
+   (list "disculpa me atiendes?"  "claro, que necesita?")
+   (list "quiero un café" "¿americano, expresso, cortado o latte?")
+   (list "americano" "algo para acompañarlo? tenemos sandwich, pastel o dulces")
+   (list "expresso" "algo mas? desea un agregado?")
+   (list "cortado" "solo eso?")
+   (list "latte" "quiere servirlo con un pastel?")
+   (list "sandwich" "esta bien, algo mas? gracias")
+   (list "pastel" "listo, algo mas?")
+   (list "dulces" "agregado, que mas?")
+   (list "nada mas, gracias" "ok, enseguida le llevaran su pedido, gracias")
+   (list "buenas tardes" "buenas tardes, que desea llevar?")
+   (list "buenas noches" "buenas noches, que necesita?")
+   (list "no se" "que tal un cafe? un pastel?")
+   (list "podria ser un cafe" "le recomiendo americano")
+   (list "sandwich tienen?" "si, tambien tenemos pastel y dulces")
+   (list "creo que eso seria, muchas gracias" "gracias a usted")
+   (list "que venden?" "tenemos cafe, sandiwch, pastel y dulces para agregado")
+   (list "" "")
+   (list "" "")
+   (list "" "")
+   (list "" "")
+   (list "" "")
+ 
+))
+(define (preguntas conversaciones)
+  (map first (conversaciones))
+  )
+(define (respuestas conversaciones)
+  (map second (conversaciones))
+  )
+  
+;(contract-random-generate (or/c integer?)) integer? es la condicion, o
+;FUNCION DE PERTENENCIA chatbot?
+;CONSTRUCTORES
+;SELECTORES
