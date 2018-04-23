@@ -1,41 +1,322 @@
 #lang racket
-(define (conversaciones)
- (list
-   (list "buenos dias" "buenos dias")
-   (list "hola" "en que puedo ayudarle?")
-   (list "buenas noches" "buenas noches, que desea llevar?")
-   (list "disculpa me atiendes?"  "claro, que necesita?")
-   (list "quiero un café" "¿americano, expresso, cortado o latte?")
-   (list "americano" "algo para acompañarlo? tenemos sandwich, pastel o dulces")
-   (list "expresso" "algo mas? desea un agregado?")
-   (list "cortado" "solo eso?")
-   (list "latte" "quiere servirlo con un pastel?")
-   (list "sandwich" "esta bien, algo mas? gracias")
-   (list "pastel" "listo, algo mas?")
-   (list "dulces" "agregado, que mas?")
-   (list "nada mas, gracias" "ok, enseguida le llevaran su pedido, gracias")
-   (list "buenas tardes" "buenas tardes, que desea llevar?")
-   (list "buenas noches" "buenas noches, que necesita?")
-   (list "no se" "que tal un cafe? un pastel?")
-   (list "podria ser un cafe" "le recomiendo americano")
-   (list "sandwich tienen?" "si, tambien tenemos pastel y dulces")
-   (list "creo que eso seria, muchas gracias" "gracias a usted")
-   (list "que venden?" "tenemos cafe, sandiwch, pastel y dulces para agregado")
-   (list "" "")
-   (list "" "")
-   (list "" "")
-   (list "" "")
-   (list "" "")
- 
-))
-(define (preguntas conversaciones)
-  (map first (conversaciones))
+(require racket/date)
+
+
+;CONSTRUCTOR
+;funcion que crea el TDA chatbot
+;dominio: nulo
+;recorrido: un chatbot
+
+;//////////////////////////////CONSTANTES PREDEFINIDAS//////////////////////////////
+(define chatbot
+"inicio;Buenos dias, bienvenido a la Cafeteria bot, que se le ofrece?/Hola buenas tardes, en que puedo ayudarle?/Buenas noches, que lleva?
+quiero un cafe;claro, de cual?/tenemos varios tipos de cafe/revise nuestra carta de cafes
+tiene cafe?;si, tenemos americano, expresso, cortado, latte/tenemos varios tipos/tenemos hartos tipos, incluyendo los tradicionales
+que cafe tienen?;americano, expresso, cortado, latte y expresso/tenemos desde expresso y americano, hasta latte, 4 tipos!/tenemos 4 variedades: latte, americano, expresso y cortado
+latte;ya, un latte, y que mas?/anotado el latte, buena eleccion, lleva algo mas?/sirviendo su latte, desea agregar algo a su orden?
+cuales tiene?;en un momento le digo.../dejeme buscar la carta.../voy a consultar...
+no gracias;esta bien, tenemos su orden lista/estan preparando su orden/su orden esta en proceso
+me puede decir cuales tiene?;ah si, tenemos americano, latte, cortado y expreso/claro, se me habia olvidado, tenemos americano, latte, cortado y expresso/lo siento, lo habia olvidado, tenemos americano, expresso, latte y cortado
+no;de acuerdo, enseguida le sirvo/le llevan enseguida/pase al costado a retirar su orden
+si;cual quiere?/cual lleva?/de cual?/cual cafe?
+americano;agregado, quiere otro?/anotado, algo mas?/lo agregue a su pedido, esta todo listo?
+cortado;puedo ofrecerle algo mas?/listo, un cortado, nada mas?/no quiere un latte?
+expresso;algo mas?/anotado, agrega otro?/el expresso es bueno, pero podria agregar un americano
+opcion_nula;no tenemos eso, puede repetir?/no esta en el menu/no esta disponible en este cafe
+fin;muchas gracias, que le vaya bien!/gracias por preferirnos, que este bien/le agradecemos su preferencia, vuelva pronto!
+")
+;LISTAS PREDEFINIDAS PARA TEST
+(define user1
+  (list  "tiene cafe?" "quiero un latte" "quiero otro" "americano"
+    "que tiene?" "expresso" )
   )
-(define (respuestas conversaciones)
-  (map second (conversaciones))
+(define user2
+  (list "que cafe tienen?" "cortado" "americano" "pastel" "quiero otro" "cortado"
+      "fin"  )
+  )
+(define user3
+  (list "quiero un cafe" "cuales tiene?" "cortado" "pastel" "" ""
+       )
+  )
+
+;*////////////////////FUNCIONES AUXILIARES////////////////////////*
+(define (log? log)
+  (if
+   (string? log)
+  #t #f ) 
+  )
+
+;DECLARACIONES DE TIEMPO
+(define segundos
+ (number->string(modulo (modulo (modulo (current-seconds) 86400) 3600) 60)))
+(define minutos
+  (number->string(quotient (modulo (modulo (current-seconds) 86400)3600) 60)))
+(define (horas)
+  (define numero (- (quotient (modulo (current-seconds) 86400) 3600) 3))
+ (if (< numero 0) (number->string(+ numero 12)) (number->string numero))
+  )
+(define hours
+  (- (quotient (modulo (current-seconds) 86400) 3600) 3)
+  )
+;Declaracion de log
+;dominio: no posee
+;recorrido: string, declaracion de un log vacio
+(define log "")
+
+(define (log-append log palabra)
+ (if (and (string? log) (string? palabra)
+   )
+    (string-append log palabra "\n")
+    (lambda (x)
+      "no es un string valido")
+    )
+  )
+
+;Funcion: agregar log, tipo set
+;Dom: string x string
+;Rec: string
+(define (agregarlog log palabra)
+  (string-append log palabra "\n"))
+;Saluda segun la hora del dia
+;dominio: nulo, funcion constante
+;recorrido: string
+(define (saludo)
+  (if (< (string->number(horas)) 12) "Buenos días"
+     (if(< (string->number(horas)) 20) "Buenas tardes" "Buenas noches")
+      )
+  )
+;Funcion get-respuestas
+;Dom: string x int
+;Rec: string
+(define (get-respuestas dialogo seed)
+  (list-ref (string-split(
+    car(cdr (string-split dialogo ";")))"/")seed)
+  )
+
+;get-message es la funcion que adquiere las respuestas segun una determinada pregunta
+;dominio: string x string
+;recorrido: string 
+(define (get-message chatbot pregunta)
+  (define (get-lineas chatbot)
+    (string-split chatbot "\n")
+  )
+  (define (get-preguntas dialogo)
+    ( string-split dialogo ";")
+    )
+
+  (define (entregar-chat dialogo pregunta)
+    (if (null? dialogo)
+        ""
+        (if (string-ci=? pregunta (car(get-preguntas (car dialogo))))
+            (car dialogo)
+           (entregar-chat (cdr dialogo) pregunta)
+           
+                        )
+        )
+    )
+  (if (string-ci=? (entregar-chat (get-lineas chatbot) pregunta)
+                  "" )
+   (entregar-chat (get-lineas chatbot) "opcion_nula")
+   (entregar-chat (get-lineas chatbot) pregunta)
+      )
+)
+
+(define (set-score chatbot log)
+    (define (get-lineas chatbot)
+    (string-split chatbot "\n")
+  )
+  (define (puntaje log)
+    (- (length (get-lineas log)) 2)
+    )
+  ;Cuerpo de la funcion set-score
+  (if (<= (puntaje log) 0)
+      (number->string 0)
+      (if (<= (puntaje log )3)
+          (number->string 5)
+          (if (<=(puntaje log)5)
+              (number->string 4)
+              (if(<=(puntaje log) 7)
+                 (number->string 3)
+                 (if(<=(puntaje log) 9)
+                    (number->string 2) (number->string 1))
+                 )
+              )
+          )
+      )
+)
+
+
+; *//////////////// FUNCIONES REQUERIDAS //////////////////////*
+;Funcion beginDialog
+;dominio: un chatbot (string), un log (string), semilla (int)
+;recorrido: string (log)
+
+(define (hashing x )
+ (modulo(+ x 8) 3 ) 
+  )
+;(define (beginDialog chatbot log seed)
+;    (log-append log (string-append "__________\n" "Chatbot: " (get-respuestas (get-message chatbot "inicio") 0)))
+; )
+(define (beginDialog chatbot log seed)
+  ;calculo de id unica para conversacion
+  (define (calcular_id log)
+    (number->string (* (+ (* (string-length log) 32) 35) 3))
+    )
+  ;Cuerpo de la funcion
+  (if (< hours 0)
+      (log-append log (string-append "**********" (calcular_id log)"\n" (horas) ":" minutos" "  "Chatbot: " (get-respuestas (get-message chatbot "inicio") 2)))
+      (if (< hours 12)
+          (log-append log (string-append "**********" (calcular_id log)"\n"(horas) ":" minutos" " "Chatbot: " (get-respuestas (get-message chatbot "inicio") 0))
+                      )
+         (log-append log (string-append "**********" (calcular_id log)"\n"(horas) ":" minutos" " "Chatbot: " (get-respuestas (get-message chatbot "inicio") 1))) )
+      )
+  )
+
+;Funcion sendMessage
+;Dom: string x string x string x int
+;Rec: string
+(define (sendMessage mensaje chatbot log seed)
+  (define (cantidad_logs log)
+    (length (obtener_logs log)))
+
+  (define (obtener_logs log)
+    (string-split log "__________"))
+  (define (memoria log)
+    (define (limpiar_mensajes log)
+      ;funcion que le retira al log los parametros "usuario: " y "chatbot: " convirtiendolos en una lista
+      ;retorna lista (("id" "begindialog") ("usuario\n" "chatbot\n" ))
+      (map (lambda (x)
+             (string-split x "Chatbot: "))
+           (string-split log "Usuario: " )
+           )
+      )
+ 	(define (funcion_anexa_dos log)
+					;Funcion que entrega la busqueda realizada
+					;Dom: strings
+					;Rec: string
+					(define (entregar_busqueda strings)
+						(if (= (length strings) 2)
+							(car strings)
+							""
+						)
+					)
+					;Cuerpo de la funcion funcion_anexa_dos
+					(map
+						(lambda (x) (entregar_busqueda (string-split (car x) "\n")))
+						(limpiar_mensajes log)
+					)
+				)
+(define (obtener_pedidos log)
+  (remove* (list "quiero un cafe" "tienen cafe?" "no gracias" "cuales tiene?"
+                 "me puede decir cuales tiene?" "si" "no" "no gracias")
+           (cdr (funcion_anexa_dos log)))
+  )
+    (log-append log (string-append "Chatbot: " "la gente ha pedido anteriormente " (list-ref (obtener_pedidos log) (hashing seed))))
+    ;(obtener_pedidos log)
+  )  
+  (if (and (>= (cantidad_logs log) 3) (string-ci=? mensaje "que me recomiendas?"))
+      (memoria log)
+      (log-append log (string-append (horas) ":" minutos" " "Usuario: " mensaje "\n"
+     (horas) ":" minutos" " "Chatbot: "(get-respuestas (get-message chatbot mensaje) (hashing seed))))
+      )
+  
+  
+  )
+;Funcion endDialog
+;Dom: string x string x string x int
+;Rec: string
+(define (endDialog chatbot log seed)
+  (log-append log (string-append (horas) ":" minutos" " "Chatbot: " (get-respuestas (get-message chatbot "fin") (hashing seed))
+                                 "\n__________"))
+  )
+;Funcion Test
+;Dom: list x string x string x string x int
+;Rec: string
+(define (test user chatbot log seed)
+  (define (test2 user chatbot log seed)
+  (if(null? user)
+     ;si la lista es nula, se termina la conversacion
+     (endDialog chatbot log seed)
+     ;sino, se llama a la auxiliar, se parte la conversacion con el primer mensaje
+     (test2 (cdr user) chatbot (sendMessage (car user) chatbot log seed) seed)
+     )
+  )
+
+  (log-append log (test2 user (beginDialog chatbot log seed) log seed)))
+
+;Funcion Rate
+;Dom: string x int x string
+;Rec: string
+;Funcion que emplea una evaluacion hecha por el usuario y otra
+;por una metrica definida previamente, para llamarla en el parametro f
+;se debe usar (set-score chatbot log)
+(define (rate chatbot score f log)
+    (define (get-lineas log)
+    (string-split log "\n")
+  )
+  ;obtiene
+  (define (get-firstline log)
+    car(car(get-lineas log))
+    )
+  (define (obtener-id log)
+   ( car(string-split (get-firstline log) "**********"))
+    )
+ ; (obtener-id log)
+  (if (string-contains? log "__________")
+     (log-append chatbot
+      (string-append "Evaluaciones ""<"(obtener-id log)">" ":" (number->string score)" " "auto-evaluacion: " (set-score chatbot log))
+      )
+     "hola"
+)
+)
+;/////////////////////////EXTRAS/////////////////////////////////
+;Funcion Displaylog
+;Dom: string x string
+;Rec: string
+(define (displayLog chatbot log)
+  (display log))
+
+
+(define l1 (beginDialog chatbot log 5))
+(define l2 (sendMessage "quiero un cafe" chatbot l1 4))
+(define l3 (sendMessage "americano" chatbot l2 3))
+(define l4 (sendMessage "latte" chatbot l3 7))
+(define l5 (endDialog chatbot l4 4))
+(define l6 (beginDialog chatbot l5 4))
+(define l7 (sendMessage "tienen cafe?" chatbot l6 8))
+(define l8 (sendMessage "expresso" chatbot l7 9))
+(define l9 (sendMessage "no gracias" chatbot l8 4))
+(define l10 (endDialog chatbot l9 7))
+(display l10)
+(define (funcion_anexa_uno log)
+					(map
+						(lambda (x) (string-split x "Chatbot: "))
+						(string-split log "Usuario: ")
+					))
+(define (lista-anexa log)
+  (car  (cdr (funcion_anexa_uno log))))
+
+	(define (funcion_anexa_dos log)
+					;Funcion que entrega la busqueda realizada
+					;Dom: strings
+					;Rec: string
+					(define (entregar_busqueda strings)
+						(if (= (length strings) 2)
+							(car strings)
+							""
+						)
+					)
+					;Cuerpo de la funcion funcion_anexa_dos
+					(map
+						(lambda (x) (entregar_busqueda (string-split (car x) "\n")))
+						(funcion_anexa_uno log)
+					)
+				)
+(define (obtener_pedidos log)
+  (remove* (list "quiero un cafe" "tienen cafe?" "no gracias" "cuales tiene?"
+                 "me puede decir cuales tiene?" "si" "no" "no gracias")
+           (cdr (funcion_anexa_dos log)))
   )
   
-;(contract-random-generate (or/c integer?)) integer? es la condicion, o
-;FUNCION DE PERTENENCIA chatbot?
-;CONSTRUCTORES
-;SELECTORES
+(funcion_anexa_dos l10)
+(obtener_pedidos l10)
