@@ -46,6 +46,10 @@ fin;muchas gracias, que le vaya bien!/gracias por preferirnos, que este bien/le 
    (string? log)
   #t #f ) 
   )
+(define (chatbot? chatbot)
+  (if (string? chatbot)
+      #t
+      #f))
 
 ;DECLARACIONES DE TIEMPO
 (define segundos
@@ -128,14 +132,28 @@ fin;muchas gracias, que le vaya bien!/gracias por preferirnos, que este bien/le 
     (define (get-lineas chatbot)
     (string-split chatbot "\n")
   )
+ 
   ;puntaje log le resta a la cantidad de lineas, las que incluyen beginDialog y endDialog
   ;Dom: string
   ;Rec: int
   (define (puntaje log)
     (- (length (get-lineas log)) 2)
     )
+  (define (get-logs log)
+   (string-split log "__________"))
+
+  
+  (define (cantidad-logs log)
+    length(get-logs log))
+  (define (obtener-id lista largo)
+    (if (= largo 1)
+       ( car(lista))
+       (obtener-id log (- largo 1))
+        )
+    )
   ;Cuerpo de la funcion set-score
-  (if (<= (puntaje log) 0)
+  (if (and (chatbot? chatbot) (log? log))
+       (if (<= (puntaje log) 0)
       (number->string 0)
       (if (<= (puntaje log )3)
           (number->string 5)
@@ -149,6 +167,8 @@ fin;muchas gracias, que le vaya bien!/gracias por preferirnos, que este bien/le 
               )
           )
       )
+       "")
+
 )
 ;funcion hashing crea un numero "aleatorio" a partir de la semilla, que ira de 0 a 2, para acceder a las posibles respuestas
 ;Dom: int
@@ -245,8 +265,11 @@ fin;muchas gracias, que le vaya bien!/gracias por preferirnos, que este bien/le 
   ;si el usuario dice "que me recomiendas?" se usará la memoria a largo plazo
   (if (and (>= (cantidad_logs log) 2) (string-ci=? mensaje "que me recomiendas?"))
       (memoria log)
-      (log-append log (string-append (horas) ":" minutos" " "Usuario: " mensaje "\n"
+      (if (and (chatbot? chatbot) (log? log) (string? mensaje) (integer? seed))
+          (log-append log (string-append (horas) ":" minutos" " "Usuario: " mensaje "\n"
      (horas) ":" minutos" " "Chatbot: "(get-respuestas (get-message chatbot mensaje) (hashing seed))))
+          "")
+      
       )
 
   )
@@ -254,8 +277,11 @@ fin;muchas gracias, que le vaya bien!/gracias por preferirnos, que este bien/le 
 ;Dom: string x string x string x int
 ;Rec: string
 (define (endDialog chatbot log seed)
-  (log-append log (string-append (horas) ":" minutos" " "Chatbot: " (get-respuestas (get-message chatbot "fin") (hashing seed))
+  (if (and (chatbot? chatbot) (integer? seed))
+      (log-append log (string-append (horas) ":" minutos" " "Chatbot: " (get-respuestas (get-message chatbot "fin") (hashing seed))
                                  "\n__________"))
+      "")
+   
   )
 ;Funcion Test
 ;Dom: list x string x string x string x int
@@ -273,7 +299,10 @@ fin;muchas gracias, que le vaya bien!/gracias por preferirnos, que este bien/le 
      )
   )
   ;Cuerpo de la funcion test
-  (log-append log (test2 user chatbot (beginDialog chatbot log seed)  seed)))
+  (if (and (list? user) (chatbot? chatbot) (log? log) (integer? seed))
+     (log-append log (test2 user chatbot (beginDialog chatbot log seed)  seed))
+     "")
+  )
 
 ;Funcion Rate
 ;Dom: string x int x string
@@ -305,9 +334,12 @@ fin;muchas gracias, que le vaya bien!/gracias por preferirnos, que este bien/le 
 ;Dom: string x string
 ;Rec: string
 (define (displayLog chatbot log)
-  (display log))
+  (if (and (chatbot? chatbot) (log? log))
+      (display log)
+      "")
+  )
 
-;///////////////////////PRUEBAS////////////////////////////////
+
 (define l1 (beginDialog chatbot log 5))
 (define l2 (sendMessage "quiero un cafe" chatbot l1 4))
 (define l3 (sendMessage "americano" chatbot l2 3))
