@@ -128,8 +128,6 @@ fin;muchas gracias, que le vaya bien!/gracias por preferirnos, que este bien/le 
     (define (get-lineas chatbot)
     (string-split chatbot "\n")
   )
-  (define (getlastlog log)
-    )
   ;puntaje log le resta a la cantidad de lineas, las que incluyen beginDialog y endDialog
   ;Dom: string
   ;Rec: int
