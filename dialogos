@@ -338,11 +338,10 @@ fin;muchas gracias, que le vaya bien!/gracias por preferirnos, que este bien/le 
       (display log)
       "")
   )
-
-
-(define l1 (beginDialog chatbot log 5))
-(define l2 (sendMessage "quiero un cafe" chatbot l1 4))
-(define l3 (sendMessage "americano" chatbot l2 3))
+#|
+;(define l1 (beginDialog chatbot log 5))
+;(define l2 (sendMessage "quiero un cafe" chatbot l1 4))
+;(define l3 (sendMessage "americano" chatbot l2 3))
 (define l4 (sendMessage "latte" chatbot l3 7))
 (define l5 (endDialog chatbot l4 4))
 (define l6 (beginDialog chatbot l5 4))
@@ -351,7 +350,7 @@ fin;muchas gracias, que le vaya bien!/gracias por preferirnos, que este bien/le 
 (define l9 (sendMessage "expresso" chatbot l8 9))
 (define l10 (sendMessage "no gracias" chatbot l9 4))
 (define l11 (endDialog chatbot l10 7))
-(displayLog chatbot l11)
-(displayLog chatbot (test user3 chatbot l10 0) )
-(displayLog chatbot (rate chatbot 5 (set-score chatbot l10) l10))
-
+;(displayLog chatbot l11)
+;(displayLog chatbot (test user3 chatbot l10 0) )
+;(displayLog chatbot (rate chatbot 5 (set-score chatbot l10) l10))
+|#
